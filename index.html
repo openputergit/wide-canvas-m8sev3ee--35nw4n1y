@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video2Quiz - Learning Made Easy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<style>
+    * {
+        font-family: 'Inter', sans-serif;
+    }
+    .loading-bar {
+        width: 100%;
+        height: 4px;
+        background-color: #ddd;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    .loading-progress {
+        height: 100%;
+        background-color: #3b82f6;
+        transition: width 0.3s ease;
+    }
+    .pdf-container {
+        border: 1px solid #e5e7eb;
+        height: 400px;
+        overflow-y: auto;
+        padding: 1rem;
+        background-color: white;
+    }
+    .quiz-container {
+        background-color: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .quiz-question {
+        padding: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .quiz-option {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .quiz-option:hover {
+        background-color: #f3f4f6;
+    }
+    .quiz-option.selected {
+        background-color: #dbeafe;
+    }
+    .quiz-option.correct {
+        background-color: #d1fae5;
+    }
+    .quiz-option.incorrect {
+        background-color: #fee2e2;
+    }
+    @media (max-width: 640px) {
+        .tabs-container {
+            flex-direction: column;
+        }
+        .tab-button {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+    }
+</style>
+<body class="bg-gray-50">
+    <!-- Authentication Container -->
+    <div id="auth-container" class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
+            <div class="text-center">
+                <h2 class="mt-6 text-3xl font-extrabold text-gray-900">Video2Quiz</h2>
+                <p class="mt-2 text-sm text-gray-600">Convert videos to PDFs and Quizzes</p>
+            </div>
+            
+            <!-- Auth Tabs -->
+            <div class="flex border-b border-gray-200">
+                <button id="signin-tab" class="px-4 py-2 border-b-2 font-medium text-sm border-blue-500 text-blue-600">Sign In</button>
+                <button id="signup-tab" class="px-4 py-2 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">Sign Up</button>
+            </div>
+            
+            <div id="signin-form" class="mt-8 space-y-6">
+                <div class="rounded-md shadow-sm -space-y-px">
+                    <div>
+                        <input id="signin-email" name="email" type="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Email address">
+                    </div>
+                    <div>
+                        <input id="signin-password" name="password" type="password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Password">
+                    </div>
+                </div>
+                
+                <div>
+                    <button onclick="signIn()" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                        </span>
+                        Sign In
+                    </button>
+                </div>
+                <div class="text-sm text-center">
+                    <a href="#" class="font-medium text-blue-600 hover:text-blue-500">Forgot your password?</a>
+                </div>
+            </div>
+            
+            <div id="signup-form" class="mt-8 space-y-6 hidden">
+                <div class="rounded-md shadow-sm -space-y-px">
+                    <div>
+                        <input id="signup-name" name="name" type="text" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Full name">
+                    </div>
+                    <div>
+                        <input id="signup-email" name="email" type="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Email address">
+                    </div>
+                    <div>
+                        <input id="signup-password" name="password" type="password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Password">
+                    </div>
+                </div>
+                
+                <div>
+                    <button onclick="signUp()" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                            <i class="bi bi-person-plus"></i>
+                        </span>
+                        Sign Up
+                    </button>
+                </div>
+                <div class="text-sm text-center">
+                    <p class="text-gray-500">By signing up, you agree to our <a href="#" class="font-medium text-blue-600 hover:text-blue-500">Terms</a> and <a href="#" class="font-medium text-blue-600 hover:text-blue-500">Privacy Policy</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification Email Modal -->
+    <div id="verification-modal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-6 rounded-lg max-w-md w-full">
+            <div class="flex justify-between items-start">
+                <h3 class="text-lg font-medium text-gray-900">Email Verification</h3>
+                <button onclick="closeVerificationModal()" class="text-gray-400 hover:text-gray-500">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="mt-4">
+                <div class="flex items-center justify-center">
+                    <i class="bi bi-envelope-check text-5xl text-blue-500"></i>
+                </div>
+                <p class="mt-4 text-center text-sm text-gray-500">
+                    We've sent a verification email to <span id="verification-email" class="font-medium"></span>.
+                    Please check your inbox and click the verification link to activate your account.
+                </p>
+            </div>
+            <div class="mt-5 sm:mt-6">
+                <button onclick="simulateVerification()" class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:text-sm">
+                    I've verified my email
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application Container -->
+    <div id="main-container" class="hidden">
+        <!-- Navigation -->
+        <nav class="bg-white shadow">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex">
+                        <div class="flex-shrink-0 flex items-center">
+                            <h1 class="text-xl font-bold text-blue-600">Video2Quiz</h1>
+                        </div>
+                        <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                            <a href="#" onclick="showTab('dashboard')" class="border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                Dashboard
+                            </a>
+                            <a href="#" onclick="showTab('history')" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                History
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="hidden md:ml-4 md:flex-shrink-0 md:flex md:items-center">
+                            <div class="ml-3 relative">
+                                <div>
+                                    <button type="button" class="bg-white rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" id="user-menu-button">
+                                        <span class="sr-only">Open user menu</span>
+                                        <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                            <span class="text-blue-800 font-medium" id="user-initials">U</span>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center ml-4">
+                            <button onclick="logout()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                <i class="bi bi-box-arrow-right mr-2"></i> Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <!-- Dashboard Tab -->
+            <div id="dashboard-tab" class="px-4 py-6 sm:px-0">
+                <div class="bg-white shadow rounded-lg p-6">
+                    <div class="space-y-6">
+                        <!-- Upload Section -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900">Upload Video</h3>
+                            <div class="mt-2">
+                                <input type="file" accept="video/*" id="video-upload" class="sr-only">
+                                <label for="video-upload" class="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                    <span class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                        <i class="bi bi-upload mr-2"></i> Choose file
+                                    </span>
+                                </label>
+                                <span id="selected-file-name" class="ml-2 text-sm text-gray-500"></span>
+                                <p class="mt-3 text-sm text-gray-500">Or enter video URL:</p>
+                                <div class="mt-1 flex rounded-md shadow-sm">
+                                    <input type="text" id="video-url" class="focus:ring-blue-500 focus:border-blue-500 flex-1 block w-full rounded-md sm:text-sm border-gray-300" placeholder="https://example.com/video.mp4">
+                                    <button type="button" onclick="handleVideoUrl()" class="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        Process
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Processing Section -->
+                        <div id="processing-container" class="hidden">
+                            <h4 class="text-sm font-medium text-gray-900">Processing Video</h4>
+                            <div class="mt-2 space-y-2">
+                                <div>
+                                    <div class="flex justify-between text-xs text-gray-500">
+                                        <span>Extracting Audio</span>
+                                        <span id="extracting-status">Pending</span>
+                                    </div>
+                                    <div class="loading-bar mt-1">
+                                        <div id="extracting-progress" class="loading-progress" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="flex justify-between text-xs text-gray-500">
+                                        <span>Speech Recognition</span>
+                                        <span id="speech-status">Pending</span>
+                                    </div>
+                                    <div class="loading-bar mt-1">
+                                        <div id="speech-progress" class="loading-progress" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="flex justify-between text-xs text-gray-500">
+                                        <span>Summarizing Content</span>
+                                        <span id="summary-status">Pending</span>
+                                    </div>
+                                    <div class="loading-bar mt-1">
+                                        <div id="summary-progress" class="loading-progress" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="flex justify-between text-xs text-gray-500">
+                                        <span>Generating Quiz</span>
+                                        <span id="quiz-status">Pending</span>
+                                    </div>
+                                    <div class="loading-bar mt-1">
+                                        <div id="quiz-progress" class="loading-progress" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                
+                                <p id="processing-status" class="mt-2 text-sm font-medium text-gray-900">Overall: 0%</p>
+                            </div>
+                        </div>
+
+                        <!-- Language & Options Section -->
+                        <div id="options-container" class="hidden">
+                            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-900">Select Output Language</h4>
+                                    <select id="language" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                        <option value="en">English</option>
+                                        <option value="es">Spanish</option>
+                                        <option value="fr">French</option>
+                                        <option value="de">German</option>
+                                        <option value="zh">Chinese</option>
+                                        <option value="hi">Hindi</option>
+                                        <option value="ru">Russian</option>
+                                        <option value="ar">Arabic</option>
+                                    </select>
+                                </div>
+
+                                <div id="quiz-options">
+                                    <h4 class="text-sm font-medium text-gray-900">Quiz Options</h4>
+                                    <div class="mt-2 space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Number of Questions</label>
+                                            <input type="number" id="question-count" min="1" max="20" value="10" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Question Types</label>
+                                            <div class="mt-2 space-y-2">
+                                                <label class="inline-flex items-center">
+                                                    <input type="checkbox" id="multiple-choice" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" checked>
+                                                    <span class="ml-2 text-sm text-gray-600">Multiple Choice</span>
+                                                </label>
+                                                <label class="inline-flex items-center">
+                                                    <input type="checkbox" id="true-false" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" checked>
+                                                    <span class="ml-2 text-sm text-gray-600">True/False</span>
+                                                </label>
+                                                <label class="inline-flex items-center">
+                                                    <input type="checkbox" id="fill-blank" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                                    <span class="ml-2 text-sm text-gray-600">Fill in the Blank</span>
+                                                </label>
+                                                <label class="inline-flex items-center">
+                                                    <input type="checkbox" id="short-answer" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                                    <span class="ml-2 text-sm text-gray-600">Short Answer</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-5">
+                                <button onclick="generateTranscript()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    <i class="bi bi-file-earmark-text mr-2"></i> Generate Transcript & Quiz
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Results Tabs -->
+                        <div id="results-container" class="hidden">
+                            <div class="tabs-container flex border-b border-gray-200">
+                                <button onclick="switchResultTab('transcript')" class="tab-button px-4 py-2 border-b-2 font-medium text-sm border-blue-500 text-blue-600" id="transcript-tab-btn">Transcript</button>
+                                <button onclick="switchResultTab('quiz')" class="tab-button px-4 py-2 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" id="quiz-tab-btn">Quiz</button>
+                                <button onclick="switchResultTab('results')" class="tab-button px-4 py-2 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 hidden" id="results-tab-btn">Results</button>
+                            </div>
+                            
+                            <!-- Transcript Tab Content -->
+                            <div id="transcript-tab" class="py-4">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="text-lg font-medium text-gray-900">Transcript</h4>
+                                    <button onclick="downloadPDF()" class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        <i class="bi bi-download mr-1"></i> Download PDF
+                                    </button>
+                                </div>
+                                <div class="pdf-container bg-white rounded-lg shadow">
+                                    <div id="transcript-content" class="prose max-w-none">
+                                        <!-- Transcript content will be inserted here -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Quiz Tab Content -->
+                            <div id="quiz-tab" class="py-4 hidden">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="text-lg font-medium text-gray-900">Quiz</h4>
+                                    <span id="quiz-timer" class="text-sm font-medium text-gray-700">Time: 00:00</span>
+                                </div>
+                                <div id="quiz-questions" class="space-y-4">
+                                    <!-- Quiz questions will be inserted here -->
+                                </div>
+                                <div class="mt-6">
+                                    <button onclick="submitQuiz()" id="submit-quiz" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        Submit Quiz
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Results Tab Content -->
+                            <div id="results-tab" class="py-4 hidden">
+                                <div class="bg-white rounded-lg shadow p-6">
+                                    <div class="text-center mb-6">
+                                        <h4 class="text-lg font-medium text-gray-900">Quiz Results</h4>
+                                        <div class="mt-2">
+                                            <span id="quiz-score" class="text-3xl font-bold text-blue-600">0/0</span>
+                                            <span id="quiz-percentage" class="ml-2 text-lg text-gray-500">(0%)</span>
+                                        </div>
+                                        <div class="mt-1">
+                                            <span id="quiz-time" class="text-sm text-gray-500">Time taken: 00:00</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-6">
+                                        <h5 class="text-md font-medium text-gray-900 mb-4">Your Progress</h5>
+                                        <div class="h-64">
+                                            <canvas id="progressChart"></canvas>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-8">
+                                        <h5 class="text-md font-medium text-gray-900 mb-4">Review Answers</h5>
+                                        <div id="quiz-review" class="space-y-4">
+                                            <!-- Review content will be inserted here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div id="history-tab" class="px-4 py-6 sm:px-0 hidden">
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-6">History</h3>
+                    <div id="history-list" class="space-y-4">
+                        <!-- History will be dynamically added here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Global variables
+        let quizQuestions = [];
+        let quizStartTime;
+        let quizTimerInterval;
+        let userAnswers = [];
+        let quizScores = [];
+        
+        // Authentication Tabs
+        document.getElementById('signin-tab').addEventListener('click', () => {
+            document.getElementById('signin-form').classList.remove('hidden');
+            document.getElementById('signup-form').classList.add('hidden');
+            document.getElementById('signin-tab').classList.add('border-blue-500', 'text-blue-600');
+            document.getElementById('signup-tab').classList.remove('border-blue-500', 'text-blue-600');
+            document.getElementById('signup-tab').classList.add('border-transparent', 'text-gray-500');
+        });
+        
+        document.getElementById('signup-tab').addEventListener('click', () => {
+            document.getElementById('signin-form').classList.add('hidden');
+            document.getElementById('signup-form').classList.remove('hidden');
+            document.getElementById('signup-tab').classList.add('border-blue-500', 'text-blue-600');
+            document.getElementById('signin-tab').classList.remove('border-blue-500', 'text-blue-600');
+            document.getElementById('signin-tab').classList.add('border-transparent', 'text-gray-500');
+        });
+        
+        // Authentication functions
+        function signIn() {
+            const email = document.getElementById('signin-email').value;
+            const password = document.getElementById('signin-password').value;
+            
+            if (!email || !password) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            if (!isValidEmail(email)) {
+                alert('Please enter a valid email address');
+                return;
+            }
+            
+            // In a real application, you would authenticate with a backend here
+            // For demonstration, we'll simulate a successful login
+            handleSuccessfulAuth(email);
+        }
+        
+        function signUp() {
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            
+            if (!name || !email || !password) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            if (!isValidEmail(email)) {
+                alert('Please enter a valid email address');
+                return;
+            }
+            
+            // In a real application, you would register with a backend here
+            // For demonstration, we'll show the verification email modal
+            document.getElementById('verification-email').textContent = email;
+            document.getElementById('verification-modal').classList.remove('hidden');
+        }
+        
+        function closeVerificationModal() {
+            document.getElementById('verification-modal').classList.add('hidden');
+        }
+        
+        function simulateVerification() {
+            closeVerificationModal();
+            const email = document.getElementById('signup-email').value;
+            handleSuccessfulAuth(email);
+        }
+        
+        function handleSuccessfulAuth(email) {
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('main-container').classList.remove('hidden');
+            
+            // Set user initials
+            const initials = email.charAt(0).toUpperCase();
+            document.getElementById('user-initials').textContent = initials;
+            
+            // Initialize page content
+            showTab('dashboard');
+            clearForm();
+        }
+        
+        function logout() {
+            document.getElementById('auth-container').classList.remove('hidden');
+            document.getElementById('main-container').classList.add('hidden');
+            clearForm();
+            resetProcessing();
+        }
+        
+        function isValidEmail(email) {
+            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return regex.test(email);
+        }
+        
+        function clearForm() {
+            document.getElementById('signin-email').value = '';
+            document.getElementById('signin-password').value = '';
+            document.getElementById('signup-name').value = '';
+            document.getElementById('signup-email').value = '';
+            document.getElementById('signup-password').value = '';
+        }
+        
+        // Tab navigation
+        function showTab(tab) {
+            // Hide all tabs
+            document.getElementById('dashboard-tab').classList.add('hidden');
+            document.getElementById('history-tab').classList.add('hidden');
+            
+            // Show selected tab
+            document.getElementById(`${tab}-tab`).classList.remove('hidden');
+        }
+        
+        // Video upload handling
+        document.getElementById('video-upload').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                document.getElementById('selected-file-name').textContent = file.name;
+                handleVideoProcess();
+            }
+        });
+        
+        function handleVideoUrl() {
+            const url = document.getElementById('video-url').value;
+            if (url) {
+                handleVideoProcess();
+            } else {
+                alert('Please enter a valid video URL');
+            }
+        }
+        
+        function handleVideoProcess() {
+            resetProcessing();
+            
+            // Show processing container
+            document.getElementById('processing-container').classList.remove('hidden');
+            
+            // Simulate processing steps
+            simulateProcessing('extracting', 0, 100, 10, () => {
+                simulateProcessing('speech', 0, 100, 15, () => {
+                    simulateProcessing('summary', 0, 100, 20, () => {
+                        simulateProcessing('quiz', 0, 100, 10, () => {
+                            // Processing complete
+                            document.getElementById('options-container').classList.remove('hidden');
+                        });
+                    });
+                });
+            });
+        }
+        
+        function simulateProcessing(stage, start, end, duration, callback) {
+            const progressBar = document.getElementById(`${stage}-progress`);
+            const statusText = document.getElementById(`${stage}-status`);
+            let current = start;
+            
+            statusText.textContent = 'In Progress';
+            statusText.classList.add('text-yellow-500');
+            
+            const interval = setInterval(() => {
+                current += 1;
+                progressBar.style.width = `${current}%`;
+                
+                // Update overall progress
+                updateOverallProgress();
+                
+                if (current >= end) {
+                    clearInterval(interval);
+                    statusText.textContent = 'Complete';
+                    statusText.classList.remove('text-yellow-500');
+                    statusText.classList.add('text-green-500');
+                    if (callback) callback();
+                }
+            }, duration * 10); // Adjust speed of simulation
+        }
+        
+        function updateOverallProgress() {
+            const extractingWidth = parseInt(document.getElementById('extracting-progress').style.width) || 0;
+            const speechWidth = parseInt(document.getElementById('speech-progress').style.width) || 0;
+            const summaryWidth = parseInt(document.getElementById('summary-progress').style.width) || 0;
+            const quizWidth = parseInt(document.getElementById('quiz-progress').style.width) || 0;
+            
+            const overall = Math.floor((extractingWidth + speechWidth + summaryWidth + quizWidth) / 4);
+            document.getElementById('processing-status').textContent = `Overall: ${overall}%`;
+        }
+        
+        function resetProcessing() {
+            // Hide and reset all processing elements
+            document.getElementById('processing-container').classList.add('hidden');
+            document.getElementById('options-container').classList.add('hidden');
+            document.getElementById('results-container').classList.add('hidden');
+            
+            document.getElementById('extracting-progress').style.width = '0%';
+            document.getElementById('speech-progress').style.width = '0%';
+            document.getElementById('summary-progress').style.width = '0%';
+            document.getElementById('quiz-progress').style.width = '0%';
+            
+            document.getElementById('extracting-status').textContent = 'Pending';
+            document.getElementById('speech-status').textContent = 'Pending';
+            document.getElementById('summary-status').textContent = 'Pending';
+            document.getElementById('quiz-status').textContent = 'Pending';
+            document.getElementById('extracting-status').className = 'text-gray-500';
+            document.getElementById('speech-status').className = 'text-gray-500';
+            document.getElementById('summary-status').className = 'text-gray-500';
+            document.getElementById('quiz-status').className = 'text-gray-500';
+            
+            document.getElementById('processing-status').textContent = 'Overall: 0%';
+            
+            // Reset result tabs
+            switchResultTab('transcript');
+        }
+        
+        // Generate transcript and quiz
+        function generateTranscript() {
+            // Get the language setting
+            const language = document.getElementById('language').value;
+            const languageName = document.getElementById('language').options[document.getElementById('language').selectedIndex].text;
+            
+            // Show the results container
+            document.getElementById('results-container').classList.remove('hidden');
+            
+            // Generate sample transcript based on language
+            let transcriptContent = '';
+            if (language === 'en') {
+                transcriptContent = generateEnglishTranscript();
+            } else if (language === 'es') {
+                transcriptContent = generateSpanishTranscript();
+            } else if (language === 'fr') {
+                transcriptContent = generateFrenchTranscript();
+            } else {
+                transcriptContent = generateGenericTranscript(languageName);
+            }
+            
+            document.getElementById('transcript-content').innerHTML = transcriptContent;
+            
+            // Generate sample quiz questions
+            generateQuizQuestions();
+            
+            // Add to history
+            addToHistory();
+        }
+        
+        function generateEnglishTranscript() {
+            return `
+                <h2 class="text-xl font-bold mb-4">Introduction to Machine Learning</h2>
+                
+                <p class="mb-2"><strong>[00:00:05]</strong> Welcome to this video on Machine Learning fundamentals. Today, we'll explore the basic concepts and applications of machine learning in various domains.</p>
+                
+                <p class="mb-2"><strong>[00:01:30]</strong> Machine Learning is a subset of artificial intelligence that focuses on building systems that learn from data. Unlike traditional programming where we write explicit rules, ML algorithms find patterns in data.</p>
+                
+                <p class="mb-2"><strong>[00:03:15]</strong> There are three main types of machine learning:</p>
+                <ul class="list-disc pl-6 mb-2">
+                    <li>Supervised Learning: The algorithm learns from labeled training data</li>
+                    <li>Unsupervised Learning: The algorithm finds hidden patterns in unlabeled data</li>
+                    <li>Reinforcement Learning: The algorithm learns through trial and error</li>
+                </ul>
+                
+                <p class="mb-2"><strong>[00:05:42]</strong> Common applications of Machine Learning include:</p>
+                <ul class="list-disc pl-6 mb-2">
+                    <li>Natural Language Processing</li>
+                    <li>Computer Vision</li>
+                    <li>Recommendation Systems</li>
+                    <li>Fraud Detection</li>
+                </ul>
+                
+                <p class="mb-4"><strong>[00:08:20]</strong> In supervised learning, we provide the algorithm with example inputs and their desired outputs. The goal is for the algorithm to learn a general rule that maps inputs to outputs.</p>
+                
+                <h3 class="text-lg font-bold mb-2">Key Concepts in Machine Learning</h3>
+                
+                <p class="mb-2"><strong>[00:10:05]</strong> <strong>Training and Testing:</strong> We typically split our data into training data (used to train the model) and testing data (used to evaluate the model's performance).</p>
+                
+                <p class="mb-2"><strong>[00:12:30]</strong> <strong>Overfitting and Underfitting:</strong> Overfitting occurs when a model learns the training data too well, including its noise and outliers. Underfitting occurs when a model is too simple to capture the underlying pattern.</p>
+                
+                <p class="mb-4"><strong>[00:15:45]</strong> <strong>Feature Engineering:</strong> This is the process of selecting and transforming variables to improve model performance. Good feature engineering can significantly boost model accuracy.</p>
+                
+                <p class="mb-2"><strong>[00:18:20]</strong> In conclusion, machine learning is transforming numerous industries by enabling computers to learn from data and make intelligent decisions without explicit programming.</p>
+                
+                <p class="mb-2"><strong>[00:19:50]</strong> Thank you for watching this introduction to Machine Learning. In the next video, we'll dive deeper into specific algorithms and their implementations.</p>
+            `;
+        }
+        
+        function generateSpanishTranscript() {
+            return `
+                <h2 class="text-xl font-bold mb-4">Introducción al Aprendizaje Automático</h2>
+                
+                <p class="mb-2"><strong>[00:00:05]</strong> Bienvenidos a este video sobre los fundamentos del Aprendizaje Automático. Hoy exploraremos los conceptos básicos y aplicaciones del aprendizaje automático en varios dominios.</p>
+                
+                <p class="mb-2"><strong>[00:01:30]</strong> El Aprendizaje Automático es un subconjunto de la inteligencia artificial que se centra en construir sistemas que aprenden de los datos. A diferencia de la programación tradicional donde escribimos reglas explícitas, los algoritmos de AA encuentran patrones en los datos.</p>
+                
+                <p class="mb-2"><strong>[00:03:15]</strong> Hay tres tipos principales de aprendizaje automático:</p>
+                <ul class="list-disc pl-6 mb-2">
+                    <li>Aprendizaje Supervisado: El algoritmo aprende de datos de entrenamiento etiquetados</li>
+                    <li>Aprendizaje No Supervisado: El algoritmo encuentra patrones ocultos en datos no etiquetados</li>
+                    <li>Aprendizaje por Refuerzo: El algoritmo aprende mediante prueba y error</li>
+                </ul>
+                
+                <p class="mb-2"><strong>[00:05:42]</strong> Aplicaciones comunes del Aprendizaje Automático incluyen:</p>
+                <ul class="list-disc pl-6 mb-2">
+                    <li>Procesamiento de Lenguaje Natural</li>
+                    <li>Visión por Computadora</li>
+                    <li>Sistemas de Recomendación</li>
+                    <li>Detección de Fraude</li>
+                </ul>
+                
+                <p class="mb-4"><strong>[00:08:20]</strong> En el aprendizaje supervisado, proporcionamos al algoritmo ejemplos de entradas y sus salidas deseadas. El objetivo es que el algoritmo aprenda una regla general que mapee entradas a salidas.</p>
+                
+                <h3 class="text-lg font-bold mb-2">Conceptos Clave en Aprendizaje Automático</h3>
+                
+                <p class="mb-2"><strong>[00:10:05]</strong> <strong>Entrenamiento y Prueba:</strong> Típicamente dividimos nuestros datos en datos de entrenamiento (usados para entrenar el modelo) y datos de prueba (usados para evaluar el rendimiento del modelo).</p>
+                
+                <p class="mb-2"><strong>[00:12:30]</strong> <strong>Sobreajuste y Subajuste:</strong> El sobreajuste ocurre cuando un modelo aprende demasiado bien los datos de entrenamiento, incluyendo su ruido y valores atípicos. El subajuste ocurre cuando un modelo es demasiado simple para capturar el patrón subyacente.</p>
+                
+                <p class="mb-4"><strong>[00:15:45]</strong> <strong>Ingeniería de Características:</strong> Es el proceso de seleccionar y transformar variables para mejorar el rendimiento del modelo. Una buena ingeniería de características puede aumentar significativamente la precisión del modelo.</p>
+                
+                <p class="mb-2"><strong>[00:18:20]</strong> En conclusión, el aprendizaje automático está transformando numerosas industrias al permitir que las computadoras aprendan de los datos y tomen decisiones inteligentes sin programación explícita.</p>
+                
+                <p class="mb-2"><strong>[00:19:50]</strong> Gracias por ver esta introducción al Aprendizaje Automático. En el próximo video, profundizaremos en algoritmos específicos y sus implementaciones.</p>
+            `;
+        }
+        
+        function generateFrenchTranscript() {
+            return `
+                <h2 class="text-xl font-bold mb-4">Introduction à l'Apprentissage Automatique</h2>
+                
+                <p class="mb-2"><strong>[00:00:05]</strong> Bienvenue à cette vidéo sur les fondamentaux de l'Apprentissage Automatique. Aujourd'hui, nous explorerons les concepts de base et les applications de l'apprentissage automatique dans divers domaines.</p>
+                
+                <p class="mb-2"><strong>[00:01:30]</strong> L'Apprentissage Automatique est un sous-ensemble de l'intelligence artificielle qui se concentre sur la construction de systèmes qui apprennent à partir des données. Contrairement à la programmation traditionnelle où nous écrivons des règles explicites, les algorithmes d'AA trouvent des modèles dans les données.</p>
+                
+                <p class="mb-2"><strong>[00:03:15]</strong> Il existe trois types principaux d'apprentissage automatique :</p>
+                <ul class="list-disc pl-6 mb-2">
+                    <li>Apprentissage Supervisé : L'algorithme apprend à partir de données d'entraînement étiquetées</li>
+                    <li>Apprentissage Non Supervisé : L'algorithme trouve des modèles cachés dans des données non étiquetées</li>
+                    <li>Apprentissage par Renforcement : L'algorithme apprend par essais et erreurs</li>
+                </ul>
+                
+                <p class="mb-2"><strong>[00:05:42]</strong> Les applications courantes de l'Apprentissage Automatique comprennent :</p>
+                <ul class="list-disc pl-6 mb-2">
+                    <li>Traitement du Langage Naturel</li>
+                    <li>Vision par Ordinateur</li>
+                    <li>Systèmes de Recommandation</li>
+                    <li>Détection de Fraude</li>
+                </ul>
+                
+                <p class="mb-4"><strong>[00:08:20]</strong> Dans l'apprentissage supervisé, nous fournissons à l'algorithme des exemples d'entrées et leurs sorties souhaitées. L'objectif est que l'algorithme apprenne une règle générale qui fait correspondre les entrées aux sorties.</p>
+                
+                <h3 class="text-lg font-bold mb-2">Concepts Clés en Apprentissage Automatique</h3>
+                
+                <p class="mb-2"><strong>[00:10:05]</strong> <strong>Entraînement et Test :</strong> Nous divisons généralement nos données en données d'entraînement (utilisées pour former le modèle) et en données de test (utilisées pour évaluer les performances du modèle).</p>
+                
+                <p class="mb-2"><strong>[00:12:30]</strong> <strong>Surapprentissage et Sous-apprentissage :</strong> Le surapprentissage se produit lorsqu'un modèle apprend trop bien les données d'entraînement, y compris son bruit et ses valeurs aberrantes. Le sous-apprentissage se produit lorsqu'un modèle est trop simple pour saisir le modèle sous-jacent.</p>
+                
+                <p class="mb-4"><strong>[00:15:45]</strong> <strong>Ingénierie des Caractéristiques :</strong> C'est le processus de sélection et de transformation des variables pour améliorer les performances du modèle. Une bonne ingénierie des caractéristiques peut augmenter considérablement la précision du modèle.</p>
+                
+                <p class="mb-2"><strong>[00:18:20]</strong> En conclusion, l'apprentissage automatique transforme de nombreuses industries en permettant aux ordinateurs d'apprendre à partir des données et de prendre des décisions intelligentes sans programmation explicite.</p>
+                
+                <p class="mb-2"><strong>[00:19:50]</strong> Merci d'avoir regardé cette introduction à l'Apprentissage Automatique. Dans la prochaine vidéo, nous approfondirons les algorithmes spécifiques et leurs implémentations.</p>
+            `;
+        }
+        
+        function generateGenericTranscript(language) {
+            return `
+                <h2 class="text-xl font-bold mb-4">Introduction to Machine Learning (Translated to ${language})</h2>
+                
+                <p class="mb-4">This transcript has been automatically generated and translated to ${language}.</p>
+                
+                <p class="mb-2">The video covers the following main topics:</p>
+                <ul class="list-disc pl-6 mb-4">
+                    <li>Basic concepts of Machine Learning</li>
+                    <li>Types of Machine Learning approaches</li>
+                    <li>Applications in various domains</li>
+                    <li>Key concepts like training/testing, overfitting, and feature engineering</li>
+                </ul>
+                
+                <p class="mb-4">The full transcript is available in this translated version. You can download the PDF for a complete reference.</p>
+                
+                <p class="italic text-gray-600">Note: Machine translation may not be 100% accurate. For critical applications, please review the translation.</p>
+            `;
+        }
+        
+        function generateQuizQuestions() {
+            // Create sample quiz questions
+            quizQuestions = [
+                {
+                    type: 'multiple-choice',
+                    question: 'What is Machine Learning primarily focused on?',
+                    options: [
+                        'Writing explicit programming rules',
+                        'Building systems that learn from data',
+                        'Creating user interfaces',
+                        'Hardware optimization'
+                    ],
+                    correctAnswer: 1,
+                    explanation: 'Machine Learning focuses on building systems that learn from data, in contrast to traditional programming where explicit rules are written.'
+                },
+                {
+                    type: 'multiple-choice',
+                    question: 'Which of these is NOT a main type of machine learning?',
+                    options: [
+                        'Supervised Learning',
+                        'Unsupervised Learning',
+                        'Reinforcement Learning',
+                        'Directive Learning'
+                    ],
+                    correctAnswer: 3,
+                    explanation: 'The three main types of machine learning are Supervised Learning, Unsupervised Learning, and Reinforcement Learning. "Directive Learning" is not a standard type of machine learning.'
+                },
+                {
+                    type: 'true-false',
+                    question: 'In supervised learning, the algorithm learns from unlabeled data.',
+                    options: ['True', 'False'],
+                    correctAnswer: 1,
+                    explanation: 'False. In supervised learning, the algorithm learns from labeled training data, where both inputs and desired outputs are provided.'
+                },
+                {
+                    type: 'multiple-choice',
+                    question: 'What is overfitting in machine learning?',
+                    options: [
+                        'When a model is too simple to capture the underlying pattern',
+                        'When a model learns the training data too well, including noise and outliers',
+                        'When a model takes too long to train',
+                        'When a model has too few parameters'
+                    ],
+                    correctAnswer: 1,
+                    explanation: 'Overfitting occurs when a model learns the training data too well (including noise and outliers), which reduces its ability to generalize to new data.'
+                },
+                {
+                    type: 'true-false',
+                    question: 'Feature engineering can significantly improve model performance.',
+                    options: ['True', 'False'],
+                    correctAnswer: 0,
+                    explanation: 'True. Feature engineering is the process of selecting and transforming variables, which can significantly boost model accuracy and performance.'
+                },
+                {
+                    type: 'multiple-choice',
+                    question: 'What is typically used to evaluate a model\'s performance?',
+                    options: [
+                        'Training data only',
+                        'Testing data only',
+                        'A combination of training and testing data',
+                        'None of the above'
+                    ],
+                    correctAnswer: 1,
+                    explanation: 'Testing data is used to evaluate a model\'s performance. This data is separate from the training data to ensure the model can generalize to new examples.'
+                },
+                {
+                    type: 'fill-blank',
+                    question: 'Machine Learning is a subset of ________ that focuses on building systems that learn from data.',
+                    answer: 'artificial intelligence',
+                    explanation: 'Machine Learning is a subset of artificial intelligence that focuses on building systems that learn from data without being explicitly programmed.'
+                },
+                {
+                    type: 'multiple-choice',
+                    question: 'Which of the following is NOT a common application of Machine Learning?',
+                    options: [
+                        'Natural Language Processing',
+                        'Computer Vision',
+                        'Mechanical Engineering',
+                        'Fraud Detection'
+                    ],
+                    correctAnswer: 2,
+                    explanation: 'While Machine Learning can be applied in mechanical engineering, it's not one of the common primary applications compared to Natural Language Processing, Computer Vision, and Fraud Detection.'
+                },
+                {
+                    type: 'short-answer',
+                    question: 'Explain the difference between supervised and unsupervised learning in your own words.',
+                    model_answer: 'Supervised learning uses labeled data where the algorithm learns from examples with known outcomes. Unsupervised learning works with unlabeled data and finds patterns without predefined categories.',
+                    explanation: 'Supervised learning requires labeled training data with desired outputs. Unsupervised learning works with unlabeled data to find hidden patterns or structures.'
+                },
+                {
+                    type: 'true-false',
+                    question: 'In reinforcement learning, the algorithm learns through guided examples provided by humans.',
+                    options: ['True', 'False'],
+                    correctAnswer: 1,
+                    explanation: 'False. In reinforcement learning, the algorithm learns through trial and error, receiving rewards or penalties for actions it takes in an environment, rather than from guided examples.'
+                }
+            ];
+            
+            // Filter questions based on selected question types
+            const selectedTypes = [];
+            if (document.getElementById('multiple-choice').checked) selectedTypes.push('multiple-choice');
+            if (document.getElementById('true-false').checked) selectedTypes.push('true-false');
+            if (document.getElementById('fill-blank').checked) selectedTypes.push('fill-blank');
+            if (document.getElementById('short-answer').checked) selectedTypes.push('short-answer');
+            
+            let filteredQuestions = quizQuestions.filter(q => selectedTypes.includes(q.type));
+            
+            // If no types selected or no questions match, default to all questions
+            if (filteredQuestions.length === 0) {
+                filteredQuestions = quizQuestions;
+            }
+            
+            // Get the desired number of questions
+            const questionCount = parseInt(document.getElementById('question-count').value);
+            if (questionCount < filteredQuestions.length) {
+                // Shuffle and take the requested number
+                filteredQuestions = shuffleArray(filteredQuestions).slice(0, questionCount);
+            }
+            
+            quizQuestions = filteredQuestions;
+            renderQuizQuestions();
+        }
+        
+        function renderQuizQuestions() {
+            const container = document.getElementById('quiz-questions');
+            container.innerHTML = '';
+            
+            quizQuestions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'quiz-question';
+                
+                const questionText = document.createElement('h4');
+                questionText.className = 'font-medium text-gray-900 mb-2';
+                questionText.textContent = `${index + 1}. ${q.question}`;
+                questionDiv.appendChild(questionText);
+                
+                if (q.type === 'multiple-choice' || q.type === 'true-false') {
+                    const options = document.createElement('div');
+                    options.className = 'space-y-2';
+                    
+                    q.options.forEach((option, optIndex) => {
+                        const optionDiv = document.createElement('div');
+                        optionDiv.className = 'quiz-option flex items-center p-2 rounded-md';
+                        optionDiv.dataset.questionIndex = index;
+                        optionDiv.dataset.optionIndex = optIndex;
+                        optionDiv.onclick = function() { selectOption(this); };
+                        
+                        const radio = document.createElement('div');
+                        radio.className = 'h-4 w-4 rounded-full border border-gray-300 mr-2 flex-shrink-0';
+                        
+                        const label = document.createElement('div');
+                        label.className = 'text-sm text-gray-700';
+                        label.textContent = option;
+                        
+                        optionDiv.appendChild(radio);
+                        optionDiv.appendChild(label);
+                        options.appendChild(optionDiv);
+                    });
+                    
+                    questionDiv.appendChild(options);
+                } else if (q.type === 'fill-blank' || q.type === 'short-answer') {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm';
+                    input.placeholder = q.type === 'fill-blank' ? 'Fill in the blank' : 'Write your answer';
+                    input.dataset.questionIndex = index;
+                    questionDiv.appendChild(input);
+                }
+                
+                container.appendChild(questionDiv);
+            });
+            
+            // Start the quiz timer
+            startQuizTimer();
+        }
+        
+        function selectOption(optionElement) {
+            const questionIndex = optionElement.dataset.questionIndex;
+            const optionIndex = optionElement.dataset.optionIndex;
+            
+            // Remove selection from other options in the same question
+            const questionOptions = document.querySelectorAll(`.quiz-option[data-question-index="${questionIndex}"]`);
+            questionOptions.forEach(opt => {
+                opt.classList.remove('selected');
+                opt.querySelector('div:first-child').className = 'h-4 w-4 rounded-full border border-gray-300 mr-2 flex-shrink-0';
+            });
+            
+            // Add selection to clicked option
+            optionElement.classList.add('selected');
+            optionElement.querySelector('div:first-child').className = 'h-4 w-4 rounded-full bg-blue-600 mr-2 flex-shrink-0';
+            
+            // Store the answer
+            userAnswers[questionIndex] = parseInt(optionIndex);
+        }
+        
+        function startQuizTimer() {
+            quizStartTime = new Date();
+            clearInterval(quizTimerInterval);
+            userAnswers = [];
+            
+            updateQuizTimer();
+            quizTimerInterval = setInterval(updateQuizTimer, 1000);
+        }
+        
+        function updateQuizTimer() {
+            const currentTime = new Date();
+            const elapsedSeconds = Math.floor((currentTime - quizStartTime) / 1000);
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+            
+            document.getElementById('quiz-timer').textContent = `Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        function submitQuiz() {
+            // Stop the timer
+            clearInterval(quizTimerInterval);
+            
+            // Calculate score
+            let correctAnswers = 0;
+            
+            for (let i = 0; i < quizQuestions.length; i++) {
+                const question = quizQuestions[i];
+                if (question.type === 'multiple-choice' || question.type === 'true-false') {
+                    if (userAnswers[i] === question.correctAnswer) {
+                        correctAnswers++;
+                    }
+                } else if (question.type === 'fill-blank') {
+                    const userInput = document.querySelector(`input[data-question-index="${i}"]`).value.trim().toLowerCase();
+                    const correctAnswer = question.answer.toLowerCase();
+                    if (userInput === correctAnswer) {
+                        correctAnswers++;
+                    }
+                } else if (question.type === 'short-answer') {
+                    // For short answer, we'd need more sophisticated checking
+                    // For demo purposes, we'll just mark them as correct
+                    correctAnswers++;
+                }
+            }
+            
+            // Calculate elapsed time
+            const endTime = new Date();
+            const elapsedSeconds = Math.floor((endTime - quizStartTime) / 1000);
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+            const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Update the results display
+            document.getElementById('quiz-score').textContent = `${correctAnswers}/${quizQuestions.length}`;
+            const percentage = Math.round((correctAnswers / quizQuestions.length) * 100);
+            document.getElementById('quiz-percentage').textContent = `(${percentage}%)`;
+            document.getElementById('quiz-time').textContent = `Time taken: ${timeString}`;
+            
+            // Add to progress chart
+            quizScores.push(percentage);
+            updateProgressChart();
+            
+            // Generate answer review
+            generateAnswerReview();
+            
+            // Show the results tab
+            document.getElementById('results-tab-btn').classList.remove('hidden');
+            switchResultTab('results');
+        }
+        
+        function generateAnswerReview() {
+            const reviewContainer = document.getElementById('quiz-review');
+            reviewContainer.innerHTML = '';
+            
+            quizQuestions.forEach((q, index) => {
+                const reviewItem = document.createElement('div');
+                reviewItem.className = 'border border-gray-200 rounded-md overflow-hidden';
+                
+                const header = document.createElement('div');
+                header.className = 'bg-gray-50 p-3';
+                
+                const questionText = document.createElement('h5');
+                questionText.className = 'text-sm font-medium text-gray-900';
+                questionText.textContent = `${index + 1}. ${q.question}`;
+                
+                header.appendChild(questionText);
+                reviewItem.appendChild(header);
+                
+                const body = document.createElement('div');
+                body.className = 'p-3';
+                
+                if (q.type === 'multiple-choice' || q.type === 'true-false') {
+                    let userAnswer = userAnswers[index] !== undefined ? q.options[userAnswers[index]] : 'Not answered';
+                    let correctAnswer = q.options[q.correctAnswer];
+                    
+                    const userAnswerDiv = document.createElement('div');
+                    userAnswerDiv.className = 'mb-2';
+                    userAnswerDiv.innerHTML = `<span class="text-sm font-medium">Your answer:</span> <span class="${userAnswers[index] === q.correctAnswer ? 'text-green-600' : 'text-red-600'}">${userAnswer}</span>`;
+                    
+                    const correctAnswerDiv = document.createElement('div');
+                    correctAnswerDiv.className = 'mb-2';
+                    correctAnswerDiv.innerHTML = `<span class="text-sm font-medium">Correct answer:</span> <span class="text-green-600">${correctAnswer}</span>`;
+                    
+                    body.appendChild(userAnswerDiv);
+                    body.appendChild(correctAnswerDiv);
+                } else if (q.type === 'fill-blank' || q.type === 'short-answer') {
+                    const userInput = document.querySelector(`input[data-question-index="${index}"]`).value.trim();
+                    const correctAnswer = q.type === 'fill-blank' ? q.answer : q.model_answer;
+                    
+                    const userAnswerDiv = document.createElement('div');
+                    userAnswerDiv.className = 'mb-2';
+                    userAnswerDiv.innerHTML = `<span class="text-sm font-medium">Your answer:</span> <span>${userInput}</span>`;
+                    
+                    const correctAnswerDiv = document.createElement('div');
+                    correctAnswerDiv.className = 'mb-2';
+                    correctAnswerDiv.innerHTML = `<span class="text-sm font-medium">Model answer:</span> <span>${correctAnswer}</span>`;
+                    
+                    body.appendChild(userAnswerDiv);
+                    body.appendChild(correctAnswerDiv);
+                }
+                
+                if (q.explanation) {
+                    const explanationDiv = document.createElement('div');
+                    explanationDiv.className = 'mt-3 pt-3 border-t border-gray-200';
+                    
+                    const explanationTitle = document.createElement('p');
+                    explanationTitle.className = 'text-sm font-medium text-gray-900 mb-1';
+                    explanationTitle.textContent = 'Explanation:';
+                    
+                    const explanationText = document.createElement('p');
+                    explanationText.className = 'text-sm text-gray-700';
+                    explanationText.textContent = q.explanation;
+                    
+                    explanationDiv.appendChild(explanationTitle);
+                    explanationDiv.appendChild(explanationText);
+                    body.appendChild(explanationDiv);
+                }
+                
+                reviewItem.appendChild(body);
+                reviewContainer.appendChild(reviewItem);
+            });
+        }
+        
+        function downloadPDF() {
+            alert('PDF download initiated. The transcript has been saved to your downloads folder.');
+        }
+        
+        function updateProgressChart() {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            
+            // If there are no scores yet, add some sample data
+            if (quizScores.length === 0) {
+                quizScores = [75, 82, 90, 85];
+            }
+            
+            // Generate labels based on number of scores
+            const labels = quizScores.map((_, i) => `Quiz ${i+1}`);
+            
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Quiz Scores (%)',
+                        data: quizScores,
+                        fill: false,
+                        borderColor: 'rgb(59, 130, 246)',
+                        tension: 0.1,
+                        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                        pointBackgroundColor: 'rgb(59, 130, 246)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(59, 130, 246)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Score (%)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Quiz'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Score: ${context.parsed.y}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function switchResultTab(tab) {
+            // Hide all tabs
+            document.getElementById('transcript-tab').classList.add('hidden');
+            document.getElementById('quiz-tab').classList.add('hidden');
+            document.getElementById('results-tab').classList.add('hidden');
+            
+            // Deactivate all tab buttons
+            document.getElementById('transcript-tab-btn').classList.remove('border-blue-500', 'text-blue-600');
+            document.getElementById('transcript-tab-btn').classList.add('border-transparent', 'text-gray-500');
+            document.getElementById('quiz-tab-btn').classList.remove('border-blue-500', 'text-blue-600');
+            document.getElementById('quiz-tab-btn').classList.add('border-transparent', 'text-gray-500');
+            document.getElementById('results-tab-btn').classList.remove('border-blue-500', 'text-blue-600');
+            document.getElementById('results-tab-btn').classList.add('border-transparent', 'text-gray-500');
+            
+            // Show selected tab
+            document.getElementById(`${tab}-tab`).classList.remove('hidden');
+            
+            // Activate selected tab button
+            document.getElementById(`${tab}-tab-btn`).classList.remove('border-transparent', 'text-gray-500');
+            document.getElementById(`${tab}-tab-btn`).classList.add('border-blue-500', 'text-blue-600');
+        }
+        
+        // History management
+        function addToHistory() {
+            const titles = [
+                'Introduction to Machine Learning',
+                'Data Science Fundamentals',
+                'Neural Networks Explained',
+                'The Future of AI',
+                'Deep Learning Applications',
+                'Python for Data Analysis',
+                'Natural Language Processing',
+                'Computer Vision Basics',
+                'Reinforcement Learning'
+            ];
+            
+            const randomTitle = titles[Math.floor(Math.random() * titles.length)];
+            const timestamp = new Date().toLocaleString();
+            
+            const historyList = document.getElementById('history-list');
+            
+            const historyItem = document.createElement('div');
+            historyItem.className = 'bg-white shadow rounded-lg p-4';
+            historyItem.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-play-btn text-2xl text-blue-600"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h4 class="text-sm font-medium text-gray-900">${randomTitle}</h4>
+                            <p class="text-sm text-gray-500">${timestamp}</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="bi bi-file-earmark-arrow-down mr-1"></i> PDF
+                        </button>
+                        <button class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="bi bi-question-circle mr-1"></i> Quiz
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            historyList.prepend(historyItem);
+        }
+        
+        // Utility functions
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+        
+        // Initialize with some history items
+        window.onload = function() {
+            // Add some sample history items
+            for (let i = 0; i < 3; i++) {
+                addToHistory();
+            }
+        };
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
